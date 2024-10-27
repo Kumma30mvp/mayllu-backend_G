@@ -1,4 +1,23 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreateComplaintDto } from './create-complaint.dto';
+import { IsOptional, IsNumber, IsString } from 'class-validator';
 
-export class UpdateComplaintDto extends PartialType(CreateComplaintDto) {}
+export class UpdateComplaintDto {
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsNumber()
+  latitude?: number;
+
+  @IsOptional()
+  @IsNumber()
+  longitude?: number;
+
+  @IsOptional()
+  @IsNumber()
+  categoryId?: number;
+
+  @IsOptional()
+  @IsNumber()
+  districtId?: number;
+}

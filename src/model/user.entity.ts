@@ -9,7 +9,7 @@ export class User {
   @PrimaryColumn('char', { length: 8 })
   dni: string;
   @ManyToOne(() => UserCategory, (category) => category.id)
-  user_category: number;
+  user_category: UserCategory;
   @Column()
   name: string;
   @Column()

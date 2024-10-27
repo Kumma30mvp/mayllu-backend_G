@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, NotFoundException, HttpStatus, HttpException } from '@nestjs/common';
 import { ComplaintsService } from './complaints.service';
 import { CreateComplaintDto } from './dto/create-complaint.dto';
 import { UpdateComplaintDto } from './dto/update-complaint.dto';
@@ -10,27 +10,57 @@ export class ComplaintsController {
   constructor(private readonly complaintsService: ComplaintsService) {}
 
   @Post()
-  create(@Body() createComplaintDto: CreateComplaintDto) {
-    return this.complaintsService.create(createComplaintDto);
+  async create(@Body() createComplaintDto: CreateComplaintDto) {
+    try {
+      return await this.complaintsService.create(createComplaintDto);
+    } catch (error) {
+      // Lanzar una excepción con el mensaje del error específico
+      throw new HttpException(`Error creating complaint: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Get()
-  findAll() {
-    return this.complaintsService.findAll();
+  async findAll() {
+    try {
+      return await this.complaintsService.findAllComplaints();
+    } catch {
+      throw new HttpException('Error fetching complaints', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.complaintsService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    try {
+      const complaint = await this.complaintsService.findOneComplaint(+id);
+      if (!complaint) {
+        throw new NotFoundException(`Complaint with ID ${id} not found`);
+      }
+      return complaint;
+    } catch (error) {
+      throw new NotFoundException(error.message);
+    }
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateComplaintDto: UpdateComplaintDto) {
-    return this.complaintsService.update(+id, updateComplaintDto);
+  async update(@Param('id') id: string, @Body() updateComplaintDto: UpdateComplaintDto) {
+    try {
+      const updatedComplaint = await this.complaintsService.update(+id, updateComplaintDto);
+      if (!updatedComplaint) {
+        throw new NotFoundException(`Complaint with ID ${id} not found`);
+      }
+      return updatedComplaint;
+    } catch {
+      throw new HttpException('Error updating complaint', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.complaintsService.remove(+id);
+  async remove(@Param('id') id: string) {
+    try {
+      await this.complaintsService.remove(+id);
+      return { message: `Complaint with ID ${id} has been deleted` };
+    } catch (error) {
+      throw new NotFoundException(error.message);
+    }
   }
 }
