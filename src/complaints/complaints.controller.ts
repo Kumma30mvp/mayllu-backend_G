@@ -41,6 +41,19 @@ export class ComplaintsController {
     }
   }
 
+  @Get('user/:dni')
+  async findAllComplaintsFromUser(@Param('dni') dni: string) {
+    try {
+      const complaints = await this.complaintsService.findAllComplaintsFromUser(dni);
+      if (!complaints) {
+        throw new NotFoundException(`Complaints with DNI ${dni} not found`);
+      }
+      return complaints;
+    } catch (error) {
+      throw new NotFoundException(error.message);
+    }
+  }
+
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateComplaintDto: UpdateComplaintDto) {
     try {

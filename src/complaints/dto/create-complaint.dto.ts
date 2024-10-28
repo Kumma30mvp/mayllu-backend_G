@@ -27,10 +27,6 @@ export class CreateComplaintDto {
   categoryId: number;
 
   @IsNotEmpty()
-  @IsNumber()
-  districtId: number;
-
-  @IsNotEmpty()
   @IsDateString()
   created_at: Date | string;
 

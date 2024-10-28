@@ -8,10 +8,12 @@ import { ComplaintCategory } from 'src/model/complaint_category.entity';
 import { District } from 'src/model/district.entity';
 import { ComplaintState } from 'src/model/complaint_state.entity';
 import { ComplaintStateService } from './complaints-state.service';
+import { GeolocationService } from './geolocation.service';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Complaint, User, ComplaintCategory, District, ComplaintState])],
+  imports: [HttpModule, TypeOrmModule.forFeature([Complaint, User, ComplaintCategory, District, ComplaintState])],
   controllers: [ComplaintsController],
-  providers: [ComplaintsService, ComplaintStateService],
+  providers: [ComplaintsService, ComplaintStateService, GeolocationService],
 })
 export class ComplaintsModule {}

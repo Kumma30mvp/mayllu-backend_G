@@ -16,8 +16,4 @@ export class UpdateComplaintDto {
   @IsOptional()
   @IsNumber()
   categoryId?: number;
-
-  @IsOptional()
-  @IsNumber()
-  districtId?: number;
 }

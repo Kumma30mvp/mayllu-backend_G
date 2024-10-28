@@ -6,8 +6,7 @@ import { Complaint } from 'src/model/complaint.entity';
 import { Repository } from 'typeorm';
 import { User } from 'src/model/user.entity';
 import { ComplaintCategory } from 'src/model/complaint_category.entity';
-import { District } from 'src/model/district.entity';
-
+import { GeolocationService } from './geolocation.service';
 @Injectable()
 export class ComplaintsService {
   constructor(
@@ -17,8 +16,7 @@ export class ComplaintsService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(ComplaintCategory)
     private readonly categoryRepository: Repository<ComplaintCategory>,
-    @InjectRepository(District)
-    private readonly districtRepository: Repository<District>,
+    private readonly geolocationService: GeolocationService,
   ) {}
 
   async findAllComplaints() {
@@ -34,11 +32,25 @@ export class ComplaintsService {
     });
   }
 
+  async findAllComplaintsFromUser(dni: string): Promise<Complaint[]> {
+    return await this.complaintRepository.find({
+      relations: [
+        'user', // Incluye la relación con el usuario
+        'category', // Incluye la relación con la categoría de quejas
+        'district', // Incluye la relación con el distrito
+        'complaints_image', // Incluye las imágenes de la queja
+        'comments', // Incluye los comentarios
+        'complaintState', // Incluye el estado de la queja
+      ],
+      where: { user: { dni } },
+    });
+  }
+
   async create(createComplaintDto: CreateComplaintDto): Promise<Complaint> {
     // Convertir latitude y longitude a un string tipo "point" para la base de datos
     createComplaintDto.created_at = new Date(createComplaintDto.created_at);
     createComplaintDto.updated_at = new Date(createComplaintDto.updated_at);
-    const { latitude, longitude, userId, categoryId, districtId } = createComplaintDto;
+    const { latitude, longitude, userId, categoryId } = createComplaintDto;
     const formattedUbication = `(${latitude}, ${longitude})`;
 
     const user = await this.userRepository.findOne({ where: { dni: userId } });
@@ -51,9 +63,9 @@ export class ComplaintsService {
       throw new Error(`Category with ID ${categoryId} not found`);
     }
 
-    const district = await this.districtRepository.findOne({ where: { id: districtId } });
+    const district = await this.geolocationService.findOrCreateDistrict(latitude, longitude);
     if (!district) {
-      throw new Error(`District with ID ${districtId} not found`);
+      throw new Error(`District with ID ${district} not found`);
     }
 
     // Crear la entidad con las relaciones utilizando objetos parciales
@@ -84,7 +96,7 @@ export class ComplaintsService {
     }
 
     // Extrae la información del DTO
-    const { latitude, longitude, categoryId, districtId } = updateComplaintDto;
+    const { latitude, longitude, categoryId } = updateComplaintDto;
 
     // Si hay coordenadas nuevas, conviértalas a formato "point"
     if (latitude !== undefined && longitude !== undefined) {
@@ -96,10 +108,6 @@ export class ComplaintsService {
     if (categoryId !== undefined) {
       // Crear el objeto completo solo si 'categoryId' está definido
       complaint.category = { id: categoryId } as ComplaintCategory;
-    }
-
-    if (districtId !== undefined) {
-      complaint.district = { id: districtId } as District;
     }
 
     if (updateComplaintDto.description !== undefined) {
