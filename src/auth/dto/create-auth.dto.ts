@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEmail, MinLength, MaxLength, Matches } from 'class-validator';
+import { IsString, IsNotEmpty, Matches } from 'class-validator';
 
 export class CreateAuthDto {
   @IsString()
@@ -9,5 +9,4 @@ export class CreateAuthDto {
   @IsString()
   @IsNotEmpty({ message: 'La contraseña no puede estar vacía' })
   password: string;
-
 }
