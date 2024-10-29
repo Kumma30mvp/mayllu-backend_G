@@ -1,28 +1,43 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
+import { User } from 'src/model/user.entity';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
-  create(createAuthDto: CreateAuthDto) {
-    console.log('createAuthDto', createAuthDto);
-    return 'This action adds a new auth';
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>, 
+    private readonly jwtService: JwtService,
+  ) {}
+
+  async create(createAuthDto: CreateAuthDto): Promise<{access_token: string}> {
+    const existingUser = await this.userRepository.findOne({
+      where: { 
+        dni: createAuthDto.dni,
+        password: createAuthDto.password,
+      }
+    });
+    if(!existingUser){
+      throw new UnauthorizedException('No existe el usuario.');
+    };
+    const payload = {
+      dni : existingUser.dni,
+      name: existingUser.name,
+      lastname: existingUser.lastname,
+      email: existingUser.email,
+      image_url: existingUser.image_url
+    };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+    };
   }
 
-  findAll() {
-    return `This action returns all auth`;
-  }
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    console.log('updateAuthDto', updateAuthDto);
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
-  }
 }
